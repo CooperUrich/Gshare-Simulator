@@ -21,6 +21,7 @@ void Gshare(int M, int N, string trace_file) {
     int numMisses = 0;
     int numHits = 0;
     int numOperations = 0;
+    int count = 0;
 
     string bin = "";
     string comp = "";
@@ -54,8 +55,9 @@ void Gshare(int M, int N, string trace_file) {
 		trace >> hex >> actual;
 
         if( trace.eof() ) break;
-        cout << hex << endl;
+        // cout << hex << endl;
         address = stoull(hex, 0, 16);
+        
 
         // cout << "Hex: " << hex << "\nint: " << address << endl;
 
@@ -64,40 +66,42 @@ void Gshare(int M, int N, string trace_file) {
         // cout << "Address / 4: " << address << endl;
 
         temp = address;
+        counter = 0;
 
 
         while (temp > 0) {
             if (temp % 2 == 0) {
-                bin += '0';
+                bin.insert(0,1,'0');
             } else {
-                bin += '1';
+                bin.insert(0,1,'1');
             }
             temp /= 2;
+            counter++;
         }
 
         // reverse(bin.begin(),bin.end());
 
-        for (int i = 0; i < M; i++) {
-            comp += bin[i];
+        for (int i = counter -1; i >= (counter - M); i--) {
+            comp.insert(0,1,bin[i]);
         }
 
-        reverse(bin.begin(),bin.end());
-        reverse(comp.begin(),comp.end());
+        // reverse(bin.begin(),bin.end());
+        // reverse(comp.begin(),comp.end());
 
         
         // cout << "Binary (div 2) " << bin << endl;
-        cout << M <<" Digits: " << comp << endl;
+        // cout << M <<" Digits: " << comp << endl;
         // cout << "Binary -> (div 2) " << stoull(bin, 0, 2) << endl;
 
         for (int i = 0; i < N; i++) {
             if (comp[i] == '1' && global_history_buffer[i] == 0) {
-                fin += '1';
+                fin.insert(0,1,'1');
             }
             else if (comp[i] == '0' && global_history_buffer[i] == 1) {
-                fin += '1';
+                fin.insert(0,1,'1');
             } 
             else {
-                fin += '0';
+                fin.insert(0,1,'0');
             }
         }
         for (int i = N; i < M; i++) {
@@ -107,41 +111,39 @@ void Gshare(int M, int N, string trace_file) {
 
         // cout << fin << endl;
 
-        reverse(fin.begin(), fin.end());
+        // reverse(fin.begin(), fin.end());
         // cout << fin << endl;
 
         counter = 0;
         for (int i = 0; i < M; i++) {
-            a += fin[i];
+            a.insert(0,1,fin[i]);
             counter++;
 
             if (counter % 4 == 0) {
-                reverse(a.begin(), a.end());
                 // cout << a << endl;
-                b += bin_to_hex(stoull(a, 0 , 2));
+                char c =  bin_to_hex(stoull(a, 0 , 2));
+                b.insert(0,1,c);
                 counter = 0;
                 a.clear();
             }
         }
 
         if (counter != 0) {
-            reverse(a.begin(), a.end());
             // cout << a << endl;
-            b += bin_to_hex(stoull(a, 0 , 2));
+            char c = bin_to_hex(stoull(a, 0 , 2));
+            b.insert(0,1,c);
             counter = 0;
             a.clear();
         }
-        reverse(b.begin(), b.end());
-        cout << b << endl;
+        // cout << b << endl;
         int index = stoull(b, 0, 16);
         index = index % (int)(pow(2, M));
-        cout << index << endl; 
+        // cout << index << endl; 
 
 
         // Updating Table 
         if (actual == 't') {
-            cout << index << endl;
-            cout << "taken: "  <<  table[index]<< endl;
+            // cout << index << endl;
             if (table[index] < 2) {
                 table[index]++;
                 numMisses++;
@@ -154,12 +156,15 @@ void Gshare(int M, int N, string trace_file) {
                     table[index]++;
                 }
             }
+            // push a zero
+            for(int i = N - 1; i >= 0 ; i-- ) {
+                global_history_buffer[i+1] = global_history_buffer[i];
+            }
+            global_history_buffer[0] = 1;
         }
 
         if (actual == 'n') {
-            cout << index << endl;
-            cout << "not-taken :" <<  table[index] <<endl;
-            
+            // cout << index << endl;
             if (table[index] > 1) {
                 table[index]--;
                 numMisses++;
@@ -172,14 +177,27 @@ void Gshare(int M, int N, string trace_file) {
                     table[index]--;
                 }
             }
+            // push a zero
+            for(int i = N - 1; i >= 0 ; i-- ) {
+                global_history_buffer[i+1] = global_history_buffer[i];
+            }
+            global_history_buffer[0] = 0;
         }
+
+        //  cout << actual << ": ";
+        // for (int i = 0; i < N; i++) {
+        //     cout << global_history_buffer[i] << " ";
+        // }
+        // cout << endl;
         bin = "";
+        fin = "";
         comp = "";
+        b = "";
         
     }  
-    cout << M << " " << N <<  " " << ((double)numHits / (double)numOperations) <<endl;
-    cout << "Hits: " << numHits << endl;
-    cout << "Misses: " << numMisses << endl;
+    cout << M << " " << N <<  " " << (((double)numMisses / (double)numOperations) * 100) << "%" << endl;
+    // cout << "Hits: " << numHits << endl;
+    // cout << "Misses: " << numMisses << endl;
     return;
 }
 
@@ -189,27 +207,27 @@ char bin_to_hex(unsigned long long int i) {
     }
     else {
         if (i == 10) {
-            cout << 'a' << endl;
+            // cout << 'a' << endl;
             return 'a';
         }
         if (i == 11) {
-            cout << 'b' << endl;
+            // cout << 'b' << endl;
             return 'b';
         }
         if (i == 12) {
-            cout << 'c' << endl;
+            // cout << 'c' << endl;
             return 'c';
         }
         if (i == 13) {
-            cout << 'd' << endl;
+            // cout << 'd' << endl;
             return 'd';
         }
         if (i == 14) {
-            cout << 'e' << endl;
+            // cout << 'e' << endl;
             return 'e';
         }
         if (i == 15) {
-            cout << 'f' << endl;
+            // cout << 'f' << endl;
             return 'f';
         }
     }
